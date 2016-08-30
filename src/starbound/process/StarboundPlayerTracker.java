@@ -66,8 +66,24 @@ public class StarboundPlayerTracker {
     }
   }
   
-  static Kernel32 kernel32 = (Kernel32) Native.loadLibrary("kernel32", Kernel32.class);
-  static User32 user32 = (User32) Native.loadLibrary("user32", User32.class);
+  private final static Kernel32 kernel32;
+  private final static User32 user32;
+  
+  static {
+    Kernel32 k32;
+    User32 u32;
+    try {
+      k32 = (Kernel32) Native.loadLibrary("kernel32", Kernel32.class);
+      u32 = (User32) Native.loadLibrary("user32", User32.class);
+    } catch (Exception e) {
+      System.out.println("Could not load native libraries: " + e);
+      k32 = null;
+      u32 = null;
+    }
+    
+    kernel32 = k32;
+    user32 = u32;
+  }
 
   public static final int PROCESS_VM_READ = 0x0010;
   public static final int PROCESS_VM_WRITE = 0x0020;
@@ -101,7 +117,11 @@ public class StarboundPlayerTracker {
   public void startStarboundProcessScanner(
       int updateIntervalMillis, StarboundProcessScannerCallback callback,
       PlayerTrackingCallback trackerCallback) {
-    
+
+    if (kernel32 == null || user32 == null) {
+      callback.searchComplete(false, "Native libraries not available. Not on windows?");
+    }
+
     Thread thread = new Thread(new Runnable() {
       @Override
       public void run() {
