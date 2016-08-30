@@ -75,7 +75,7 @@ public class StarboundPlayerTracker {
     try {
       k32 = (Kernel32) Native.loadLibrary("kernel32", Kernel32.class);
       u32 = (User32) Native.loadLibrary("user32", User32.class);
-    } catch (Exception e) {
+    } catch (Throwable e) {
       System.out.println("Could not load native libraries: " + e);
       k32 = null;
       u32 = null;
