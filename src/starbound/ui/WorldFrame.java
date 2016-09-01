@@ -374,9 +374,9 @@ public class WorldFrame {
         SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
-            worldPanel.setTrackingPlayer(false);
             JOptionPane.showMessageDialog(
                 frame, "Failed to start tracking: " + msg, "Error", JOptionPane.ERROR_MESSAGE);
+            worldPanel.setTrackingPlayer(false);
           }          
         });
       }

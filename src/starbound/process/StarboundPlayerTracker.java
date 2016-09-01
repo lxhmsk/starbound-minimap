@@ -318,7 +318,7 @@ public class StarboundPlayerTracker {
 
     List<Player> players = Player.loadPlayers(starboundFiles);
     Player player = players.get(0);
-    Point2D.Float position = player.getLocationInCurrentWorld();
+    Point2D.Float position = player.getSavedLocationInCurrentWorld();
 
     System.out.println("Scanning for " + position.x + ", " + position.y);
 

@@ -71,11 +71,19 @@ public class Player {
   }
 
   public WorldId getCurrentWorld() {
+    return getCurrentWorld(clientContext);
+  }
+
+  public Point2D.Float getSavedLocationInCurrentWorld() {
+    return getSavedLocationInCurrentWorld(data);
+  }
+  
+  public static WorldId getCurrentWorld(Sbon clientContext) {
     Sbon world = clientContext.getByKey("reviveWarp/world");
     return new WorldId(world.asString());
   }
 
-  public Point2D.Float getLocationInCurrentWorld() {
+  public static Point2D.Float getSavedLocationInCurrentWorld(Sbon data) {
     Sbon position = data.getByPath("movementController/position");
     float x = position.getByIndex(0).asFloat();
     float y = position.getByIndex(1).asFloat();
