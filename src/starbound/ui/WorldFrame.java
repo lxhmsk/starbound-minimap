@@ -377,6 +377,7 @@ public class WorldFrame {
             JOptionPane.showMessageDialog(
                 frame, "Failed to start tracking: " + msg, "Error", JOptionPane.ERROR_MESSAGE);
             worldPanel.setTrackingPlayer(false);
+            trackPlayerButton.setText("Track Player");
           }          
         });
       }
