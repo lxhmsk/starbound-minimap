@@ -14,6 +14,8 @@ menu, so unfortunately the map doesn't update in real time.
 
 ### Player Tracking
 Player tracking works by reading the player's location directly from Starbound's process memory.
+Because it reads directly from another process's memory, it must be run as administrator.
+
 This works with Starbound version 1.05 for Windows x86_64, and will probably not work with other versions.
 
 Map Legend
