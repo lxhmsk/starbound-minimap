@@ -21,7 +21,11 @@ public class Player {
     for (File playerFile : playerFiles) {
       String playerId = playerFile.getName().replace(".player", "");
       try {
-        players.add(Player.load(playerFile, clientContextFiles.get(playerId)));
+        File playerContextFile = clientContextFiles.get(playerId);
+        if (playerContextFile == null) {
+          throw new AssertionError("Could not find player context file for player " + playerId);
+        }
+        players.add(Player.load(playerFile, playerContextFile));
       } catch (IOException e) {
         System.out.println("Could not load player file " + playerFile + ": " + e);
         return null;

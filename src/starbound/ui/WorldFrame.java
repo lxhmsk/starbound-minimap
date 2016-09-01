@@ -41,25 +41,25 @@ import starbound.ui.ProgressWatcher.ProgressListener;
 import starbound.ui.WorldSelectionDialog.WorldSelectionListener;
 
 public class WorldFrame {
-  
+
   private final JFrame frame;
   private final JButton trackPlayerButton, gotoButton, itemsButton, reloadButton, resetZoomButton;
   private final WorldPanel worldPanel;
   private final JLabel infoLabel;
 
   private final StarboundFiles starboundFiles;
-  
+
   private final List<GameFlag> gameFlags;
   private final List<Item> gameItems;
   private World world;
-  
+
   private final StarboundPlayerTracker playerTracker;
-  
-  public WorldFrame() {
+
+  public WorldFrame(StarboundFiles starboundFiles) {
 
     playerTracker = new StarboundPlayerTracker();
-    starboundFiles = new StarboundFiles();
-    
+    this.starboundFiles = starboundFiles;
+
     frame = new JFrame("Starbound Map");
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -340,7 +340,6 @@ public class WorldFrame {
         SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
-            dialog.setVisible(false);
             if (success) {
               worldPanel.setTrackingPlayer(true);
               trackPlayerButton.setText("Stop Tracking Player");
@@ -350,6 +349,7 @@ public class WorldFrame {
                   JOptionPane.ERROR_MESSAGE);
               worldPanel.setTrackingPlayer(false);
             }
+            dialog.setVisible(false);
           }          
         });
       }
@@ -384,7 +384,7 @@ public class WorldFrame {
 
     dialog.setVisible(true);
   }
-  
+
   private List<Player> loadPlayers() {
     try {
       return Player.loadPlayers(starboundFiles);

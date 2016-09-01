@@ -7,9 +7,6 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 
-import starbound.io.StarboundFiles;
-import starbound.model.Player;
-
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
@@ -20,6 +17,10 @@ import com.sun.jna.platform.win32.WinDef.HWND;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.win32.StdCallLibrary;
+
+import starbound.io.StarboundFiles;
+import starbound.model.Player;
+import steam.SteamUtils;
 
 public class StarboundPlayerTracker {
 
@@ -76,11 +77,11 @@ public class StarboundPlayerTracker {
       k32 = (Kernel32) Native.loadLibrary("kernel32", Kernel32.class);
       u32 = (User32) Native.loadLibrary("user32", User32.class);
     } catch (Throwable e) {
-      System.out.println("Could not load native libraries: " + e);
+      System.out.println("Could not load native windows libraries: " + e);
       k32 = null;
       u32 = null;
     }
-    
+
     kernel32 = k32;
     user32 = u32;
   }
@@ -120,6 +121,7 @@ public class StarboundPlayerTracker {
 
     if (kernel32 == null || user32 == null) {
       callback.searchComplete(false, "Native libraries not available. Not on windows?");
+      return;
     }
 
     Thread thread = new Thread(new Runnable() {
@@ -312,7 +314,7 @@ public class StarboundPlayerTracker {
 
     HANDLE starboundProcess = findStarboundProcess();
 
-    StarboundFiles starboundFiles = new StarboundFiles();
+    StarboundFiles starboundFiles = new StarboundFiles(SteamUtils.findStarboundInstallDir());
 
     List<Player> players = Player.loadPlayers(starboundFiles);
     Player player = players.get(0);
