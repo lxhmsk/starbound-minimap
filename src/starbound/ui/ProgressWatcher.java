@@ -17,11 +17,15 @@ public class ProgressWatcher {
   }
   
   public void start(String name) {
-    progressListener.starting(name);
+    if (progressListener != null) {
+      progressListener.starting(name);
+    }
     this.start = System.currentTimeMillis();
   }
 
   public void stop() {
-    progressListener.finished(System.currentTimeMillis() - start);
+    if (progressListener != null) {
+      progressListener.finished(System.currentTimeMillis() - start);
+    }
   }
 }

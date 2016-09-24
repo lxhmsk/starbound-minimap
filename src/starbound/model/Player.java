@@ -43,14 +43,14 @@ public class Player {
   public final String id;
   public final String name;
   
-  public final Sbon data;
+  public final Sbon playerData;
   private final Sbon clientContext;
 
-  private Player(Sbon data, Sbon clientContext) {
-    this.data = data;
+  private Player(Sbon playerData, Sbon clientContext) {
+    this.playerData = playerData;
     this.clientContext = clientContext;
-    this.id = data.getByKey("uuid").asString();
-    this.name = data.getByPath("identity/name").asString();
+    this.id = playerData.getByKey("uuid").asString();
+    this.name = playerData.getByPath("identity/name").asString();
   }
 
   /**
@@ -59,7 +59,7 @@ public class Player {
   public Map<String, String> getBookmarks() {
     Map<String, String> bookmarks = new HashMap<>();
     
-    Sbon bookmarkData = data.getByPath("bookmarks/0/1");
+    Sbon bookmarkData = playerData.getByPath("bookmarks/0/1");
     for (int i = 0; i < bookmarkData.size(); i++) {
       Sbon bookmark = bookmarkData.getByIndex(i);
       bookmarks.put(
@@ -75,16 +75,20 @@ public class Player {
   }
 
   public Point2D.Float getSavedLocationInCurrentWorld() {
-    return getSavedLocationInCurrentWorld(data);
+    return getSavedLocationInCurrentWorld(playerData);
+  }
+  
+  public List<Sbon> getMainInventory() {
+    return playerData.getByPath("inventory/mainBag").asSbonList();
   }
   
   public static WorldId getCurrentWorld(Sbon clientContext) {
     Sbon world = clientContext.getByKey("reviveWarp/world");
-    return new WorldId(world.asString());
+    return WorldId.fromId(world.asString());
   }
 
-  public static Point2D.Float getSavedLocationInCurrentWorld(Sbon data) {
-    Sbon position = data.getByPath("movementController/position");
+  public static Point2D.Float getSavedLocationInCurrentWorld(Sbon playerData) {
+    Sbon position = playerData.getByPath("movementController/position");
     float x = position.getByIndex(0).asFloat();
     float y = position.getByIndex(1).asFloat();
     return new Point2D.Float(x, y);

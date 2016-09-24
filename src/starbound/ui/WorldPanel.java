@@ -2,7 +2,6 @@ package starbound.ui;
 
 import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -10,20 +9,26 @@ import java.awt.image.BufferedImage;
 
 import javax.swing.JComponent;
 
-import starbound.model.World;
-
 class WorldPanel extends JComponent {
 
+  public interface WorldClickListener {
+    void onClick(int x, int y);
+  }
+  
   private BufferedImage worldImage;
-  private int worldWidth;
 
   private float zoom = 1f;
+  private boolean drawWrappedWorld = true;
 
   // center of viewport, in tile coordinates
   private int viewX, viewY;
-
+  
   private boolean trackingPlayer;
+  // player position, in tile coordinates
+  private int playerX, playerY;
 
+  private WorldClickListener worldClickListener;
+  
   public WorldPanel() {
 
     DragListener mouseListener = new DragListener();
@@ -32,18 +37,33 @@ class WorldPanel extends JComponent {
     this.addMouseWheelListener(mouseListener);
   }
 
-  public void setWorld(World world, BufferedImage worldImage) {
+  public void setWorld(BufferedImage worldImage) {
     this.worldImage = worldImage;
-    this.worldWidth = world.width;
-
-    Point start = world.getPlayerStart();
-    setViewCenter(start.x, start.y);
+    repaint();
   }
-  
+
+  public void setWorldClickListener(WorldClickListener worldClickListener) {
+    this.worldClickListener = worldClickListener;
+  }
+
   private class DragListener extends MouseAdapter {
 
     private int tmpViewX, tmpViewY;
     private int mouseDownX, mouseDownY;
+
+    public void mouseClicked(MouseEvent e) {
+
+      int worldX = (viewX + (int)((e.getX() - getWidth() / 2) / zoom)) % worldImage.getWidth();
+      int worldY = viewY + (int)((getHeight() / 2 - e.getY()) / zoom);
+      
+      if (worldX < 0) {
+        worldX += worldImage.getWidth();
+      }
+
+      if (worldClickListener != null) {
+        worldClickListener.onClick(worldX, worldY);
+      }
+    }
 
     @Override
     public void mousePressed(MouseEvent e) {
@@ -58,7 +78,7 @@ class WorldPanel extends JComponent {
       int deltaX = e.getX() - mouseDownX;
       int deltaY = e.getY() - mouseDownY;
       viewX = (int) (tmpViewX - deltaX / zoom);
-      viewY = (int) (tmpViewY - deltaY / zoom);
+      viewY = (int) (tmpViewY + deltaY / zoom);
       repaint();
     }
 
@@ -87,38 +107,55 @@ class WorldPanel extends JComponent {
     int imageHeight = worldImage.getHeight(null);
 
     int x = -(int) (viewX * zoom - viewportWidth / 2);
-    int y = -(int) (viewY * zoom - viewportHeight / 2);
+    int y = -(int) ((imageHeight - viewY) * zoom - viewportHeight / 2);
 
-    g.drawImage(
-        worldImage,
-        x, y,
-        (int) (imageWidth * zoom), (int) (imageHeight * zoom),
-        null);
-    
+    int scaledWidth = (int) (imageWidth * zoom);
+    int scaledHeight = (int) (imageHeight * zoom);
+
+    g.drawImage(worldImage, x, y, scaledWidth, scaledHeight, null);
+    if (drawWrappedWorld) {
+      g.drawImage(worldImage, x - scaledWidth, y, scaledWidth, scaledHeight, null);
+      g.drawImage(worldImage, x + scaledWidth, y, scaledWidth, scaledHeight, null);
+    }
+
     if (trackingPlayer) {
       g.setColor(Color.GREEN);
       // player is about 3x4 tiles
       g.fillRect(
-          viewportWidth / 2 - (int)(1 * zoom) ,
-          viewportHeight / 2 - (int)(2 * zoom),
+          x + (int)((playerX - 1) * zoom),
+          y + (int)((imageHeight - (playerY + 2)) * zoom),
           (int)(3 * zoom),
           (int)(4 * zoom));
     }
   }
 
   public void setViewCenter(int tileX, int tileY) {
-    viewX = tileX + worldWidth;
-    viewY = worldImage.getHeight(null) - tileY;
+    viewX = tileX;
+    viewY =  tileY;
     repaint();
   }
-  
+
   public void setTrackingPlayer(boolean tracking) {
     this.trackingPlayer = tracking;
-    repaint();
   }
   
+  public void setPlayerLocation(int x, int y) {
+    this.playerX = x;
+    this.playerY = y;
+    repaint();
+  }
+
   public void setZoom(float zoom) {
     this.zoom = zoom;
     repaint();
+  }
+  
+  public void setDrawWrappedWorld(boolean drawWrappedWorld) {
+    this.drawWrappedWorld = drawWrappedWorld;
+    repaint();
+  }
+  
+  public boolean getDrawWrappedWorld() {
+    return drawWrappedWorld;
   }
 }

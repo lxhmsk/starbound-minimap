@@ -25,9 +25,9 @@ public class Main {
 
     StarboundFiles starboundFiles = new StarboundFiles(starboundDir);
 
-    WorldFrame worldFrame = new WorldFrame(starboundFiles);
-    worldFrame.setVisible(true);
-    worldFrame.selectWorld();
+    WorldUi worldUi = new WorldUi(starboundFiles);
+    worldUi.setVisible(true);
+    worldUi.selectWorld();
   }
 
   private static String findStarboundDir() {

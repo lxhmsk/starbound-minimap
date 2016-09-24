@@ -1,5 +1,7 @@
 package starbound.io;
 
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -7,53 +9,78 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 public class Sbon {
 
+  private static Sbon createSbonOrNull(Object value) {
+    if (value == null) {
+      return null;
+    }
+    return new Sbon(value);
+  }
+
   private final Object value;
-  
+
   private Sbon(Object value) {
+    if (value == null) {
+      throw new IllegalArgumentException("Value cannot be null");
+    }
     this.value = value;
   }
 
   public Sbon getByPath(String path) {
+
     String[] keys = path.split("/");
     Sbon current = this;
+
     for (String key : keys) {
-      if (current == null) {
-        return null;
-      }
+
       if (current.isMap()) { 
         current = current.getByKey(key);
       } else if (current.isList()) {
         int index = Integer.parseInt(key);
         current = current.getByIndex(index);
       } else {
-        throw new AssertionError("Cannot traverse to key " + key + " in path " + path +
-            " because current element is not a list or a map: " + value);
+        throw new AssertionError(String.format(String.format(
+            "Cannot traverse to key %s in path %s because current element is not a list or a map "
+            + "(class: %s): %s", key, path, value.getClass(), value)));
+      }
+
+      if (current == null) {
+        return current;
       }
     }
     return current;
+  }
+  
+  public Sbon tryPaths(String... paths) {
+    for (String path : paths) {
+      Sbon sbon = getByPath(path);
+      if (sbon != null) {
+        return sbon;
+      }
+    }
+    return null;
   }
 
   public Sbon getByPath(String path, Object defaultValue) {
     Sbon value = getByPath(path);
     if (value == null) {
-      return new Sbon(defaultValue);
+      return createSbonOrNull(defaultValue);
     }
     return value;
   }
-  
+
   public Sbon getByKey(String key) {
-    return new Sbon(((Map<?, ?>) value).get(key));
+    return createSbonOrNull(((Map<?, ?>) value).get(key));
   }
-  
+
   public Sbon getByIndex(int index) {
-    List<?> l = (List<?>) value;
-    return new Sbon(l.get(index));
+    return createSbonOrNull(asList().get(index));
   }
 
   public int size() {
@@ -61,7 +88,7 @@ public class Sbon {
   }
   
   public boolean containsKey(String key) {
-    return ((Map<?, ?>) value).containsKey(key);
+    return asMap().containsKey(key);
   }
   
   public boolean isList() {
@@ -105,9 +132,34 @@ public class Sbon {
   public List<?> asList() {
     return (List<?>) value;
   }
+
+  public List<Sbon> asSbonList() {
+    if (!isList()) {
+      if (value == null) {
+        throw new ClassCastException("This sbon is null, not a list.");
+      } else {
+        throw new ClassCastException("This is sbon is a " + value.getClass() + ", not a list.");
+      }
+    }
+    List<?> values = asList();
+    List<Sbon> sbons = new ArrayList<>(values.size());
+    for (Object value : values) {
+      sbons.add(createSbonOrNull(value));
+    }
+    return sbons;
+  }
+  
+  public Map<String, Sbon> asSbonMap() {
+    Map<String, Sbon> sbonMap = new HashMap<>();
+    Map<String, ?> map = asMap();
+    for (Entry<String, ?> e : map.entrySet()) {
+      sbonMap.put(e.getKey(), createSbonOrNull(e.getValue()));
+    }
+    return sbonMap;
+  }
   
   public String toString() {
-    return value == null ? "null" : value.toString();
+    return value.toString();
   }
   
   public static String readString(ByteBuffer bytes) {
@@ -129,7 +181,7 @@ public class Sbon {
   }
 
   public static Sbon readSbon(ByteBuffer bytes) {
-    return new Sbon(readDynamic(bytes));
+    return createSbonOrNull(readDynamic(bytes));
   }
   
   public static Object readDynamic(ByteBuffer bytes) {
@@ -157,7 +209,7 @@ public class Sbon {
   private static long readSignedVarint(ByteBuffer bytes) {
     long v = readVarint(bytes);
     if ((v & 1) != 0) {
-      return -(v >> 1);
+      return -((v >> 1) + 1);
     } else {
       return v >> 1;
     }
@@ -182,9 +234,21 @@ public class Sbon {
     }
     return map;
   }
-  
+
   public void debugPrint() {
+    debugPrint(System.out);
+  }
+
+  public void debugPrint(String fileName) {
+    try {
+      debugPrint(new PrintStream(fileName));
+    } catch (FileNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public void debugPrint(PrintStream out) {
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    System.out.println(gson.toJson(value));
+    out.println(gson.toJson(value));
   }
 }

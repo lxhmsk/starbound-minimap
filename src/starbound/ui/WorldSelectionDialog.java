@@ -23,7 +23,6 @@ import javax.swing.SortOrder;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
-import starbound.model.Player;
 import starbound.model.World;
 
 public class WorldSelectionDialog {
@@ -35,7 +34,7 @@ public class WorldSelectionDialog {
   private final JDialog dialog;
   private WorldSelectionListener worldSelectionListener;
 
-  public WorldSelectionDialog(JFrame parent, List<File> worldFiles, List<Player> players)
+  public WorldSelectionDialog(JFrame parent, List<File> worldFiles)
       throws IOException {
     
     JTable table = createTable(worldFiles);

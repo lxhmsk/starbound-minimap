@@ -7,10 +7,13 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import starbound.io.BTreeDB5;
 import starbound.io.Sbon;
+import starbound.io.StarboundFiles;
 import starbound.io.VersionedJson;
 import starbound.io.ZipUtil;
 
@@ -104,6 +107,14 @@ public class World {
     return new World(file, db, width, height, metadata.data);
   }
   
+  public static Map<WorldId, World> loadWorlds(StarboundFiles starboundFiles) throws IOException {
+    Map<WorldId, World> worlds = new HashMap<>();
+    for (File worldFile : starboundFiles.findWorldFiles()) {
+      World w = load(worldFile);
+      worlds.put(w.getId(), w);
+    }
+    return worlds;
+  }
   
   private final BTreeDB5 db;
   
@@ -112,6 +123,7 @@ public class World {
   public final Sbon metadata;
   
   private List<VersionedJson> cachedEntities;
+  private WorldTiles cachedTiles;
   
   private World(File file, BTreeDB5 db, int width, int height, Sbon metadata) {
     this.file = file;
@@ -187,7 +199,7 @@ public class World {
     private final short[] tiles;
     private final int width, height;
 
-    public WorldTiles(int width, int height, short[] tiles) {
+    private WorldTiles(int width, int height, short[] tiles) {
       this.tiles = tiles;
       this.width = width;
       this.height = height;
@@ -211,6 +223,10 @@ public class World {
   }
   
   public WorldTiles getTileForgroundMaterial() {
+    if (cachedTiles != null) {
+      return cachedTiles;
+    }
+    
     short[] tilesArray = new short[width * height];
     WorldTiles tiles = new WorldTiles(width, height, tilesArray);
     Arrays.fill(tilesArray, (short)-2);
@@ -218,8 +234,8 @@ public class World {
     List<byte[]> keys = db.getKeys();
     for (byte[] key : keys) {
       if (key[0] == 0x01) {
-        int regionX = (key[1] << 8) | key[2];
-        int regionY = (key[3] << 8) | key[4];
+        int regionX = ((key[1] & 0xFF) << 8) | (key[2] & 0xFF);
+        int regionY = ((key[3] & 0xFF) << 8) | (key[4] & 0xFF);
         ByteBuffer bytes = get(1, regionX, regionY);
         // unknown 3 bytes
         bytes.get();
@@ -237,6 +253,8 @@ public class World {
         }
       }
     }
+
+    cachedTiles = tiles;
 
     return tiles;
   }
@@ -306,6 +324,10 @@ public class World {
   }
 
   public String getName() {
+    if (file.getName().endsWith(".shipworld")) {
+      return "Player Ship";
+    }
+
     String name = metadata.getByPath(
         "worldTemplate/celestialParameters/name", "Unknown").asString();
     name = name.replaceAll("\\^[^;]*;", "");
@@ -316,6 +338,19 @@ public class World {
     String type = metadata.getByPath(
         "worldTemplate/celestialParameters/visitableParameters/typeName", "Unknown").asString();
     return type.substring(0, 1).toUpperCase() + type.substring(1);
+  }
+  
+  public WorldId getId() {
+    Sbon coordinate = metadata.getByPath("worldTemplate/celestialParameters/coordinate");
+    List<Sbon> location = coordinate.getByKey("location").asSbonList();
+    long planet = coordinate.getByKey("planet").asLong();
+    long satellite = coordinate.getByKey("satellite").asLong();
+    return WorldId.celestialWorldIdFromCoordinates(
+        location.get(0).asLong(),
+        location.get(1).asLong(),
+        location.get(2).asLong(),
+        planet,
+        satellite);
   }
   
   //private static final byte[] tileBuffer = new byte[30];

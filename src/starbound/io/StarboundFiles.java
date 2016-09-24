@@ -33,6 +33,19 @@ public class StarboundFiles {
     return map;
   }
 
+  public Map<String, File> findShipworldFiles() {
+    Map<String, File> map = new HashMap<>();
+    List<File> files = findFiles(".shipworld", "player");
+    for (File file : files) {
+      map.put(file.getName().replace(".shipworld", ""), file);
+    }
+    return map;
+  }
+
+  public File findAssets() {
+    return Paths.get(starboundInstallDir, "assets", "packed.pak").toFile();
+  }
+  
   private List<File> findFiles(String fileExtension, String storageSubdirectory) {
 
     File storageSubdir = Paths.get(starboundInstallDir, "storage", storageSubdirectory).toFile();

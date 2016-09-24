@@ -110,6 +110,12 @@ public class BTreeDB5 {
     return keys;
   }
 
+  public List<byte[]> getAlternateKeys() {
+    ArrayList<byte[]> keys = new ArrayList<>();
+    getKeys(keys, otherRootBlockIndex);
+    return keys;
+  }
+  
   private void getKeys(List<byte[]> keys, int blockIndex) {
 
     int offset = getBlockOffset(blockIndex);
@@ -181,7 +187,7 @@ public class BTreeDB5 {
       data.get(); // unknown?
       int hi = data.getInt();
       int block = data.getInt();
-      offset += 11;
+      offset += 11; // short + byte + int + int = 11 bytes
       while (lo < hi) {
         int mid = (lo + hi) / 2;
         data.position(offset + entrySize * mid);
@@ -220,7 +226,8 @@ public class BTreeDB5 {
       throw new AssertionError("Cannot compare keys of mismatched sized");
     }
     for (int i = 0; i < a.length; i++) {
-      int c = Byte.compare(a[i], b[i]);
+      // Need to compare unsigned
+      int c = Integer.compare(a[i] & 0xFF, b[i] & 0xFF);
       if (c != 0) {
         return c;
       }

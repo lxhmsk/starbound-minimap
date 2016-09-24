@@ -19,7 +19,7 @@ import javax.swing.SortOrder;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
-import starbound.ui.WorldFrame.Item;
+import starbound.ui.WorldUi.Item;
 
 public class ItemSelectionDialog {
 
